@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'practice_main_page.dart';
+import 'practice_page/practice_main_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MainIdeaPage extends StatefulWidget {

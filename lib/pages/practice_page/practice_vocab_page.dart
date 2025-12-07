@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/question_model.dart';
+import '../../models/question_model.dart';
 import 'package:lottie/lottie.dart';
 
 class VocabQuizPage extends StatefulWidget {
