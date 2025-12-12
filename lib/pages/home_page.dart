@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ujicoba1/models/motivation_model.dart';
+import 'package:ujicoba1/pages/ai_chat_page.dart';
 import 'package:ujicoba1/pages/chose_test_page.dart';
 import '../database/db_helper.dart';
 import 'main_idea_page.dart';
@@ -190,13 +191,13 @@ class _HomePageState extends State<HomePage> {
         // ================= APPBAR BARU =================
         appBar: AppBar(
           title: Text(
-            "Welcome, $name 👋",
+            "MARY ",
             style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w600,
             ),
           ),
-          backgroundColor: Colors.cyan.shade100,
+          backgroundColor: Colors.cyan.shade400,
           elevation: 0.4,
           surfaceTintColor: Colors.transparent,
           centerTitle: false,
@@ -211,15 +212,25 @@ class _HomePageState extends State<HomePage> {
               },
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey[300],
-                  backgroundImage: photoPath.isNotEmpty
-                      ? FileImage(File(photoPath))
-                      : null,
-                  child: photoPath.isEmpty
-                      ? const Icon(Icons.person, color: Colors.black87)
-                      : null,
+                child: Container(
+                  padding: const EdgeInsets.all(0), // jarak border
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.cyan.shade800, // warna border putih
+                      width: 2, // ketebalan border
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: photoPath.isNotEmpty
+                        ? FileImage(File(photoPath))
+                        : null,
+                    child: photoPath.isEmpty
+                        ? const Icon(Icons.person, color: Colors.black87)
+                        : null,
+                  ),
                 ),
               ),
             ),
@@ -233,6 +244,17 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 0, bottom: 0),
+                  child: Text(
+                    "Welcome, $name 👋",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
                 // ================= LOTTIE =================
                 Center(
                   child: SizedBox(
@@ -245,67 +267,72 @@ class _HomePageState extends State<HomePage> {
                 ),
 
                 // ================= MOTIVATION CARD =================
-                InkWell(
-                  onTap: _generateRandomMotivation,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.orange.withOpacity(0.15),
-                          Colors.amber.withOpacity(0.20),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                Transform.translate(
+                  offset: const Offset(0, -30), // geser ke atas 20px
+                  child: InkWell(
+                    child: InkWell(
+                      onTap: _generateRandomMotivation,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.amber.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.lightbulb_outline_rounded,
-                              color: Colors.orange,
-                              size: 22,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.orange.withOpacity(0.15),
+                              Colors.amber.withOpacity(0.20),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.amber.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              "Today's Motivation",
-                              style: TextStyle(
-                                color: Colors.orange,
-                                fontWeight: FontWeight.w600,
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.lightbulb_outline_rounded,
+                                  color: Colors.orange,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  "Today's Motivation",
+                                  style: TextStyle(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "“$currentMotivation”",
+                              style: const TextStyle(
                                 fontSize: 15,
+                                color: Colors.black87,
+                                height: 1.5,
+                                fontStyle: FontStyle.italic,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "“$currentMotivation”",
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.black87,
-                            height: 1.5,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 8),
 
                 const Text(
                   "Learn Reading Text Topics 📘",
@@ -361,8 +388,9 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
+                //Test button
                 _buildFullMenuCard(
                   icon: Icons.quiz_rounded,
                   title: "Test Your Knowledge",
@@ -378,7 +406,69 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                //Ai chat
+                _buildFullMenuCard(
+                  icon: Icons.smart_toy,
+                  title: "Chat with AI",
+                  subtitle: "Ask the AI about Main Ideas and Vocabulary",
+                  color: Colors.indigo,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AIChatPage(),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                //Games
+                _buildFullMenuCard(
+                  icon: Icons.gamepad,
+                  title: "Games",
+                  subtitle: "Learn while playing",
+                  color: Colors.amber.shade700,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChoseTest(),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 40),
+
+                Center(
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Made with ❤️ by `Fedriko`, Melky`, and `Nabila`",
+                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "© 2025 Mava",
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Version 1.0.0",
+                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 0),
               ],
             ),
           ),
