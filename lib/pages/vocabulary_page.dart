@@ -716,7 +716,7 @@ class _VocabularyPageState extends State<VocabularyPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const VocabQuizPage(),
+                            builder: (context) => const PracticeVocabulary(),
                           ),
                         );
                       },

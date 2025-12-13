@@ -1,279 +1,348 @@
 import 'package:flutter/material.dart';
-import '../../models/question_model.dart';
+import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
+import 'package:audioplayers/audioplayers.dart';
 
-class VocabQuizPage extends StatefulWidget {
-  const VocabQuizPage({super.key});
+import '../../models/question_model.dart';
+import '../../models/voca_practice_question.dart';
+
+class PracticeVocabulary extends StatefulWidget {
+  const PracticeVocabulary({super.key});
 
   @override
-  State<VocabQuizPage> createState() => _VocabQuizPageState();
+  State<PracticeVocabulary> createState() => _PracticeVocabularyState();
 }
 
-class _VocabQuizPageState extends State<VocabQuizPage> {
-  int currentQuestion = 0;
-  int score = 0;
-  bool quizFinished = false;
+class _PracticeVocabularyState extends State<PracticeVocabulary>
+    with TickerProviderStateMixin {
+  // ===================== STATE =====================
+  int _currentQuestionIndex = 0;
+  int _score = 0;
 
-  final List<Question> questions = [
-    Question(
-      text: "What is the Main Idea in a paragraph?",
-      options: [
-        "A specific example supporting the text.",
-        "The most important point the writer wants to communicate.",
-        "A minor detail mentioned in the passage.",
-        "The longest sentence in the paragraph.",
-      ],
-      correctIndex: 2,
-    ),
+  bool _quizFinished = false;
+  bool _answerLocked = false;
+  int? _selectedIndex;
 
-    Question(
-      text: "What is the correct difference between Topic and Main Idea?",
-      options: [
-        "Topic is a full sentence; Main Idea is just a word.",
-        "Topic tells what the paragraph is about; Main Idea tells what the writer says about that topic.",
-        "Topic contains examples; Main Idea contains numbers and facts.",
-        "Topic and Main Idea mean exactly the same thing.",
-      ],
-      correctIndex: 1,
-    ),
+  // ===================== CONTROLLERS =====================
+  late final ConfettiController _confettiController;
+  late final AudioPlayer _audioPlayer;
 
-    Question(
-      text: "Which option is an example of a Topic?",
-      options: [
-        "Dogs are loyal pets.",
-        "Dogs help protect houses.",
-        "The reasons why dogs are useful.",
-        "Dogs.",
-      ],
-      correctIndex: 3,
-    ),
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
 
-    Question(
-      text:
-          "`Dogs are popular pets because they are friendly, loyal, and helpful to humans. Many families around the world choose dogs as companions because they can protect homes, play with children, and follow commands.` \n\nWhat is the Main Idea of the paragraph about dogs?",
-      options: [
-        "Dogs can follow many commands.",
-        "Dogs are popular pets because they are friendly, loyal, and helpful to humans.",
-        "Many families own dogs as pets.",
-        "Dogs bark when strangers come.",
-      ],
-      correctIndex: 1,
-    ),
+  late final AnimationController _progressController;
+  late final Animation<double> _progressAnimation;
 
-    Question(
-      text: "What is the purpose of supporting details in a paragraph?",
-      options: [
-        "To introduce a completely new topic.",
-        "To explain, support, or prove the Main Idea.",
-        "To make the paragraph look longer.",
-        "To distract the reader from the topic.",
-      ],
-      correctIndex: 1,
-    ),
+  // ===================== LOTTIE =====================
+  late final Future<LottieComposition> _educationLottie;
+  late final Future<LottieComposition> _starLottie;
 
-    Question(
-      text:
-          "`Regular exercise plays an important role in keeping the body healthy. "
-          "It helps improve heart function, strengthens muscles, and boosts energy levels. "
-          "People who exercise regularly often feel more active and less stressed.`\n\n"
-          "Which sentence is a Supporting Detail of the idea 'Exercise improves health'?",
-      options: [
-        "Exercise is important for everyone.",
-        "Exercise helps keep the heart strong.",
-        "People should exercise more often.",
-        "Health is a basic need for humans.",
-      ],
-      correctIndex: 1,
-    ),
+  final List<Question> _questions = vocabularyPracticeQuestions;
 
-    Question(
-      text: "How do you find the Main Idea of a paragraph?",
-      options: [
-        "Read only the first sentence.",
-        "Ignore all details and examples.",
-        "Read the whole paragraph and identify the central message.",
-        "Look only at numbers and data.",
-      ],
-      correctIndex: 2,
-    ),
+  // ===================== INIT =====================
+  @override
+  void initState() {
+    super.initState();
+    _initLottie();
+    _initAudio();
+    _initConfetti();
+    _initAnimations();
+  }
 
-    Question(
-      text:
-          "`Water is essential for the body because it helps with digestion, keeps the body hydrated, "
-          "and supports overall health. While many people like to drink sugary beverages such as soda "
-          "or sweet tea, these drinks often contain too much sugar and can be unhealthy if consumed too often. "
-          "That’s why choosing water is usually a better and healthier option.`\n\n"
-          "What is the Main Idea of the paragraph about water?",
-      options: [
-        "Sugary drinks taste good.",
-        "Water helps the body function but sugary drinks contain too much sugar.",
-        "People buy many different drinks each day.",
-        "Water is a healthier choice than sugary drinks.",
-      ],
-      correctIndex: 3,
-    ),
+  void _initLottie() {
+    _educationLottie = AssetLottie('assets/lottie/education.json').load();
+    _starLottie = AssetLottie('assets/lottie/star.json').load();
+  }
 
-    Question(
-      text:
-          "`Social media has become an important part of modern life. "
-          "People use it to communicate with friends and family, share information instantly, "
-          "and stay updated on events happening around the world. Because of these benefits, "
-          "social media plays a significant role in helping people stay connected.`\n\n"
-          "According to the paragraph, social media is important because...",
-      options: [
-        "Everyone uses social media every day.",
-        "It helps people communicate, share information, and stay connected.",
-        "It is only used for entertainment and fun.",
-        "It completely replaces face-to-face interactions.",
-      ],
-      correctIndex: 1,
-    ),
+  void _initAudio() {
+    _audioPlayer = AudioPlayer();
+  }
 
-    Question(
-      text:
-          "Based on the strategies explained in the video about finding the main idea, which strategy is NOT mentioned in the video?",
-      options: [
-        "Using titles and headings",
-        "Using topic sentences",
-        "Using concluding sentences",
-        "Find the most difficult word",
-      ],
-      correctIndex: 3,
-    ),
-  ];
+  void _initConfetti() {
+    _confettiController = ConfettiController(
+      duration: const Duration(milliseconds: 300),
+    );
+  }
 
-  void answerQuestion(int selectedIndex) {
-    if (selectedIndex == questions[currentQuestion].correctIndex) {
-      score++;
+  void _initAnimations() {
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _shakeAnimation = Tween<double>(begin: 0, end: 12).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
+    );
+
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    );
+
+    _progressAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _progressController, curve: Curves.linear),
+    );
+  }
+
+  // ===================== DISPOSE =====================
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    _audioPlayer.dispose();
+    _shakeController.dispose();
+    _progressController.dispose();
+    super.dispose();
+  }
+
+  // ===================== AUDIO =====================
+  Future<void> _playCorrectSound() async {
+    await _audioPlayer.play(AssetSource('sound/correct.mp3'));
+  }
+
+  Future<void> _playWrongSound() async {
+    await _audioPlayer.play(AssetSource('sound/wrong.mp3'));
+  }
+
+  // ===================== LOGIC =====================
+  void _handleAnswer(int index) {
+    if (_answerLocked) return;
+
+    setState(() {
+      _selectedIndex = index;
+      _answerLocked = true;
+    });
+
+    final isCorrect = index == _questions[_currentQuestionIndex].correctIndex;
+
+    if (isCorrect) {
+      _score++;
+      _confettiController.play();
+      _playCorrectSound();
+    } else {
+      _shakeController.forward().then((_) => _shakeController.reverse());
+      _playWrongSound();
     }
 
-    if (currentQuestion < questions.length - 1) {
+    _progressController.forward(from: 0).whenComplete(_nextQuestion);
+  }
+
+  void _nextQuestion() {
+    _confettiController.stop();
+
+    if (_currentQuestionIndex < _questions.length - 1) {
       setState(() {
-        currentQuestion++;
+        _currentQuestionIndex++;
+        _selectedIndex = null;
+        _answerLocked = false;
       });
     } else {
-      setState(() {
-        quizFinished = true;
-      });
+      setState(() => _quizFinished = true);
     }
   }
 
-  void restartQuiz() {
+  void _restartQuiz() {
+    _confettiController.stop();
     setState(() {
-      currentQuestion = 0;
-      score = 0;
-      quizFinished = false;
+      _currentQuestionIndex = 0;
+      _score = 0;
+      _quizFinished = false;
+      _answerLocked = false;
+      _selectedIndex = null;
     });
   }
 
+  // ===================== UI =====================
   @override
   Widget build(BuildContext context) {
-    if (quizFinished) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Main Idea Practice Result"),
-          backgroundColor: Color.fromARGB(255, 231, 231, 231),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              //Lotiieee=======================================================
-              Center(
-                child: SizedBox(
-                  height: 250,
-                  child: Lottie.asset(
-                    'assets/lottie/star.json',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
+    return _quizFinished ? _buildResultScreen() : _buildQuizScreen();
+  }
 
-              const Text("Your Score:", style: TextStyle(fontSize: 28)),
-              const SizedBox(height: 10),
-              Text(
-                "$score / ${questions.length}",
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: restartQuiz,
-                child: const Text("Try Again"),
-              ),
-
-              const SizedBox(height: 12),
-
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                },
-                child: const Text("Return to Home"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final question = questions[currentQuestion];
+  // ===================== RESULT SCREEN =====================
+  Widget _buildResultScreen() {
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Main Idea Practice"),
-        backgroundColor: const Color.fromARGB(255, 231, 231, 231),
+        title: const Text("Main Idea Result"),
+        backgroundColor: Colors.grey.shade200,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Pertanyaan ${currentQuestion + 1}/${questions.length}",
-                style: const TextStyle(fontSize: 18, color: Colors.grey),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 240,
+              child: FutureBuilder<LottieComposition>(
+                future: _starLottie,
+                builder: (_, snapshot) =>
+                    snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
               ),
+            ),
+            Text("Your Score", style: textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              "$_score / ${_questions.length}",
+              style: textTheme.bodyLarge!.copyWith(
+                fontSize: 36,
+                color: Colors.purple,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _restartQuiz,
+              child: const Text("Try Again"),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Back to Lesson"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-              // ================= LOTTIE =================
-              Center(
-                child: SizedBox(
-                  height: 250,
-                  child: Lottie.asset(
-                    'assets/lottie/person.json',
-                    fit: BoxFit.contain,
+  // ===================== QUIZ SCREEN =====================
+  Widget _buildQuizScreen() {
+    final question = _questions[_currentQuestionIndex];
+    final textTheme = Theme.of(context).textTheme;
+
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: const Text("Main Idea Practice"),
+            backgroundColor: Colors.grey.shade200,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(6),
+              child: LinearProgressIndicator(
+                value: _currentQuestionIndex / _questions.length,
+                minHeight: 6,
+                backgroundColor: Colors.grey.shade300,
+                color: Colors.purple,
+              ),
+            ),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
+                  style: textTheme.bodyMedium!.copyWith(
+                    color: Colors.grey.shade600,
+                    letterSpacing: 0.5,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 10),
-
-              Text(
-                question.text,
-                style: const TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 16),
+                _buildLottieHeader(),
+                const SizedBox(height: 16),
+                Text(
+                  question.text,
+                  style: textTheme.titleLarge,
                 ),
-              ),
-              const SizedBox(height: 30),
-
-              ...List.generate(question.options.length, (index) {
-                return Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ElevatedButton(
-                    onPressed: () => answerQuestion(index),
-                    child: Text(question.options[index]),
-                  ),
-                );
-              }),
-
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: 28),
+                ..._buildOptions(question),
+                if (_answerLocked) _buildProgressBar(),
+              ],
+            ),
           ),
         ),
+        _buildConfetti(),
+      ],
+    );
+  }
+
+  Widget _buildLottieHeader() {
+    return Center(
+      child: SizedBox(
+        height: 180,
+        child: FutureBuilder<LottieComposition>(
+          future: _educationLottie,
+          builder: (_, snapshot) =>
+              snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildOptions(Question question) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return List.generate(question.options.length, (index) {
+      Color? backgroundColor;
+
+      if (_answerLocked) {
+        if (index == question.correctIndex) {
+          backgroundColor = Colors.green;
+        } else if (index == _selectedIndex) {
+          backgroundColor = Colors.red;
+        } else {
+          backgroundColor = Colors.grey.shade400;
+        }
+      }
+
+      return AnimatedBuilder(
+        animation: _shakeAnimation,
+        builder: (_, child) {
+          final offset =
+              (_answerLocked && index == _selectedIndex && index != question.correctIndex)
+                  ? (_shakeAnimation.value % 2 == 0
+                      ? _shakeAnimation.value
+                      : -_shakeAnimation.value)
+                  : 0.0;
+
+          return Transform.translate(offset: Offset(offset, 0), child: child);
+        },
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 14),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: backgroundColor,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () => _handleAnswer(index),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                question.options[index],
+                style: textTheme.labelLarge!.copyWith(
+                  color: _answerLocked ? Colors.white : Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildProgressBar() {
+    return AnimatedBuilder(
+      animation: _progressAnimation,
+      builder: (_, __) => LinearProgressIndicator(
+        value: _progressAnimation.value,
+        backgroundColor: Colors.grey.shade300,
+        color: Colors.purple,
+      ),
+    );
+  }
+
+  Widget _buildConfetti() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConfettiWidget(
+        confettiController: _confettiController,
+        blastDirectionality: BlastDirectionality.explosive,
+        numberOfParticles: 20,
+        gravity: 0.3,
       ),
     );
   }

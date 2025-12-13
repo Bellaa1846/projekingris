@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 import '../../models/question_model.dart';
-import '../../models/q_dta_p_main_idea.dart';
+import '../../models/main_practice_question.dart';
 
 class PracticeMainIdea extends StatefulWidget {
   const PracticeMainIdea({super.key});
@@ -15,199 +15,214 @@ class PracticeMainIdea extends StatefulWidget {
 
 class _PracticeMainIdeaState extends State<PracticeMainIdea>
     with TickerProviderStateMixin {
-  int currentQuestion = 0;
-  int score = 0;
-  bool quizFinished = false;
+  // ===================== STATE =====================
+  int _currentQuestionIndex = 0;
+  int _score = 0;
 
-  bool answerLocked = false;
-  int? selectedIndex;
+  bool _quizFinished = false;
+  bool _answerLocked = false;
+  int? _selectedIndex;
 
-  /// 🔒 CONFETTI GUARD
-  bool confettiPlayed = false;
+  // ===================== CONTROLLERS =====================
+  late final ConfettiController _confettiController;
+  late final AudioPlayer _audioPlayer;
 
-  // Lottie preload
-  late final Future<LottieComposition> _lottieEducation;
-  late final Future<LottieComposition> _lottieStar;
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
 
-  // Confetti
-  late ConfettiController _confettiController;
+  late final AnimationController _progressController;
+  late final Animation<double> _progressAnimation;
 
-  // Shake animation
-  late AnimationController shakeController;
-  late Animation<double> shakeAnimation;
+  // ===================== LOTTIE =====================
+  late final Future<LottieComposition> _educationLottie;
+  late final Future<LottieComposition> _starLottie;
 
-  // Progress bar animation
-  late AnimationController progressController;
-  late Animation<double> progressAnimation;
+  final List<Question> _questions = mainIdeaPracticeQuestions;
 
-  // 🔊 AUDIO PLAYER
-  late AudioPlayer _audioPlayer;
-
-  final List<Question> questions = mainIdeaPracticeQuestions;
-
+  // ===================== INIT =====================
   @override
   void initState() {
     super.initState();
+    _initLottie();
+    _initAudio();
+    _initConfetti();
+    _initAnimations();
+  }
 
-    // Preload Lottie
-    _lottieEducation = AssetLottie('assets/lottie/education.json').load();
-    _lottieStar = AssetLottie('assets/lottie/star.json').load();
+  void _initLottie() {
+    _educationLottie = AssetLottie('assets/lottie/education.json').load();
+    _starLottie = AssetLottie('assets/lottie/star.json').load();
+  }
 
-    // 🎉 Confetti
-    _confettiController = ConfettiController(
-      duration: const Duration(milliseconds: 100),
-    );
-
-    // Shake animation
-    shakeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    shakeAnimation = Tween<double>(begin: 0, end: 12).animate(
-      CurvedAnimation(parent: shakeController, curve: Curves.elasticIn),
-    );
-
-    // Progress bar
-    progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-    progressAnimation =
-        Tween<double>(begin: 0, end: 1).animate(progressController);
-
-    // 🔊 Audio
+  void _initAudio() {
     _audioPlayer = AudioPlayer();
   }
 
+  void _initConfetti() {
+    _confettiController = ConfettiController(
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
+  void _initAnimations() {
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _shakeAnimation = Tween<double>(begin: 0, end: 12).animate(
+      CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
+    );
+
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    );
+
+    _progressAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _progressController, curve: Curves.linear),
+    );
+  }
+
+  // ===================== DISPOSE =====================
   @override
   void dispose() {
-    shakeController.dispose();
-    progressController.dispose();
     _confettiController.dispose();
     _audioPlayer.dispose();
+    _shakeController.dispose();
+    _progressController.dispose();
     super.dispose();
   }
 
-  /// 🔊 PLAY SOUND
+  // ===================== AUDIO =====================
   Future<void> _playCorrectSound() async {
-    await _audioPlayer.play(
-      AssetSource('sound/correct.mp3'),
-    );
+    await _audioPlayer.play(AssetSource('sound/correct.mp3'));
   }
 
   Future<void> _playWrongSound() async {
-    await _audioPlayer.play(
-      AssetSource('sound/wrong.mp3'),
-    );
+    await _audioPlayer.play(AssetSource('sound/wrong.mp3'));
   }
 
-  void handleAnswer(int index) {
-    if (answerLocked) return;
+  // ===================== LOGIC =====================
+  void _handleAnswer(int index) {
+    if (_answerLocked) return;
 
     setState(() {
-      selectedIndex = index;
-      answerLocked = true;
+      _selectedIndex = index;
+      _answerLocked = true;
     });
 
-    final correct = index == questions[currentQuestion].correctIndex;
+    final isCorrect = index == _questions[_currentQuestionIndex].correctIndex;
 
-    if (correct && !confettiPlayed) {
-      confettiPlayed = true;
-      score++;
+    if (isCorrect) {
+      _score++;
       _confettiController.play();
-      _playCorrectSound(); // ✅ SOUND BENAR
-    } else if (!correct) {
-      shakeController.forward().then((_) => shakeController.reverse());
-      _playWrongSound(); // ❌ SOUND SALAH
+      _playCorrectSound();
+    } else {
+      _shakeController.forward().then((_) => _shakeController.reverse());
+      _playWrongSound();
     }
 
-    progressController.forward(from: 0).whenComplete(_nextQuestion);
+    _progressController.forward(from: 0).whenComplete(_nextQuestion);
   }
 
   void _nextQuestion() {
     _confettiController.stop();
-    confettiPlayed = false;
 
-    if (currentQuestion < questions.length - 1) {
+    if (_currentQuestionIndex < _questions.length - 1) {
       setState(() {
-        currentQuestion++;
-        selectedIndex = null;
-        answerLocked = false;
+        _currentQuestionIndex++;
+        _selectedIndex = null;
+        _answerLocked = false;
       });
     } else {
-      setState(() => quizFinished = true);
+      setState(() => _quizFinished = true);
     }
   }
 
-  void restartQuiz() {
+  void _restartQuiz() {
     _confettiController.stop();
     setState(() {
-      currentQuestion = 0;
-      score = 0;
-      quizFinished = false;
-      answerLocked = false;
-      selectedIndex = null;
-      confettiPlayed = false;
+      _currentQuestionIndex = 0;
+      _score = 0;
+      _quizFinished = false;
+      _answerLocked = false;
+      _selectedIndex = null;
     });
   }
 
+  // ===================== UI =====================
   @override
   Widget build(BuildContext context) {
-    if (quizFinished) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Main Idea Practice Result"),
-          backgroundColor: const Color.fromARGB(255, 231, 231, 231),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: 250,
-                child: FutureBuilder<LottieComposition>(
-                  future: _lottieStar,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Lottie(composition: snapshot.data!);
-                    }
-                    return const SizedBox(height: 200);
-                  },
-                ),
-              ),
-              const Text("Your Score:", style: TextStyle(fontSize: 28)),
-              const SizedBox(height: 10),
-              Text(
-                "$score / ${questions.length}",
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: restartQuiz,
-                child: const Text("Try Again"),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Return to Home"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    return _quizFinished ? _buildResultScreen() : _buildQuizScreen();
+  }
 
-    final question = questions[currentQuestion];
+  // ===================== RESULT SCREEN =====================
+  Widget _buildResultScreen() {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Main Idea Result"),
+        backgroundColor: Colors.grey.shade200,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 240,
+              child: FutureBuilder<LottieComposition>(
+                future: _starLottie,
+                builder: (_, snapshot) =>
+                    snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
+              ),
+            ),
+            Text("Your Score", style: textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              "$_score / ${_questions.length}",
+              style: textTheme.bodyLarge!.copyWith(
+                fontSize: 36,
+                color: Colors.purple,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _restartQuiz,
+              child: const Text("Try Again"),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Back to Lesson"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===================== QUIZ SCREEN =====================
+  Widget _buildQuizScreen() {
+    final question = _questions[_currentQuestionIndex];
+    final textTheme = Theme.of(context).textTheme;
 
     return Stack(
       children: [
         Scaffold(
           appBar: AppBar(
             title: const Text("Main Idea Practice"),
-            backgroundColor: const Color.fromARGB(255, 231, 231, 231),
+            backgroundColor: Colors.grey.shade200,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(6),
+              child: LinearProgressIndicator(
+                value: _currentQuestionIndex / _questions.length,
+                minHeight: 6,
+                backgroundColor: Colors.grey.shade300,
+                color: Colors.purple,
+              ),
+            ),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -215,115 +230,120 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Pertanyaan ${currentQuestion + 1}/${questions.length}",
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: SizedBox(
-                    height: 200,
-                    child: FutureBuilder<LottieComposition>(
-                      future: _lottieEducation,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Lottie(composition: snapshot.data!);
-                        }
-                        return const SizedBox(height: 200);
-                      },
-                    ),
+                  "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
+                  style: textTheme.bodyMedium!.copyWith(
+                    color: Colors.grey.shade600,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
+                _buildLottieHeader(),
+                const SizedBox(height: 16),
                 Text(
                   question.text,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: textTheme.titleLarge,
                 ),
-                const SizedBox(height: 25),
-
-                // OPTIONS
-                ...List.generate(question.options.length, (index) {
-                  Color? color;
-                  if (answerLocked) {
-                    if (index == question.correctIndex) {
-                      color = Colors.green;
-                    } else if (index == selectedIndex) {
-                      color = Colors.red;
-                    } else {
-                      color = Colors.grey.shade400;
-                    }
-                  }
-
-                  return AnimatedBuilder(
-                    animation: shakeAnimation,
-                    builder: (context, child) {
-                      final offset = shakeAnimation.value;
-                      return Transform.translate(
-                        offset: Offset(
-                          answerLocked &&
-                                  selectedIndex != question.correctIndex &&
-                                  index == selectedIndex
-                              ? (offset % 2 == 0 ? offset : -offset)
-                              : 0,
-                          0,
-                        ),
-                        child: child,
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: color,
-                        ),
-                        onPressed: () => handleAnswer(index),
-                        child: Text(
-                          question.options[index],
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-
-                const SizedBox(height: 20),
-
-                if (answerLocked)
-                  AnimatedBuilder(
-                    animation: progressAnimation,
-                    builder: (context, child) {
-                      return LinearProgressIndicator(
-                        value: progressAnimation.value,
-                        backgroundColor: Colors.grey.shade300,
-                        color: Colors.purple,
-                      );
-                    },
-                  ),
-
-                const SizedBox(height: 40),
+                const SizedBox(height: 28),
+                ..._buildOptions(question),
+                if (_answerLocked) _buildProgressBar(),
               ],
             ),
           ),
         ),
+        _buildConfetti(),
+      ],
+    );
+  }
 
-        // 🎉 CONFETTI
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            numberOfParticles: 25,
-            maxBlastForce: 15,
-            minBlastForce: 10,
-            emissionFrequency: 0.01,
-            gravity: 0.3,
+  Widget _buildLottieHeader() {
+    return Center(
+      child: SizedBox(
+        height: 180,
+        child: FutureBuilder<LottieComposition>(
+          future: _educationLottie,
+          builder: (_, snapshot) =>
+              snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildOptions(Question question) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return List.generate(question.options.length, (index) {
+      Color? backgroundColor;
+
+      if (_answerLocked) {
+        if (index == question.correctIndex) {
+          backgroundColor = Colors.green;
+        } else if (index == _selectedIndex) {
+          backgroundColor = Colors.red;
+        } else {
+          backgroundColor = Colors.grey.shade400;
+        }
+      }
+
+      return AnimatedBuilder(
+        animation: _shakeAnimation,
+        builder: (_, child) {
+          final offset =
+              (_answerLocked && index == _selectedIndex && index != question.correctIndex)
+                  ? (_shakeAnimation.value % 2 == 0
+                      ? _shakeAnimation.value
+                      : -_shakeAnimation.value)
+                  : 0.0;
+
+          return Transform.translate(offset: Offset(offset, 0), child: child);
+        },
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 14),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: backgroundColor,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () => _handleAnswer(index),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                question.options[index],
+                style: textTheme.labelLarge!.copyWith(
+                  color: _answerLocked ? Colors.white : Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
         ),
-      ],
+      );
+    });
+  }
+
+  Widget _buildProgressBar() {
+    return AnimatedBuilder(
+      animation: _progressAnimation,
+      builder: (_, __) => LinearProgressIndicator(
+        value: _progressAnimation.value,
+        backgroundColor: Colors.grey.shade300,
+        color: Colors.purple,
+      ),
+    );
+  }
+
+  Widget _buildConfetti() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConfettiWidget(
+        confettiController: _confettiController,
+        blastDirectionality: BlastDirectionality.explosive,
+        numberOfParticles: 20,
+        gravity: 0.3,
+      ),
     );
   }
 }

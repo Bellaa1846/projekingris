@@ -454,7 +454,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "© 2025 Mava",
+                        "© 2025 Mary",
                         style: TextStyle(
                           color: Colors.grey.shade500,
                           fontSize: 11,

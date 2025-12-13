@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
 import '../models/question_model.dart';
-import '../models/q_dta_p_main_idea.dart';
+import '../models/main_practice_question.dart';
 
 class QuizPage extends StatefulWidget {
   const QuizPage({super.key});

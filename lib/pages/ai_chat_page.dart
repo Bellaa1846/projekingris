@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
+import 'package:lottie/lottie.dart';
 
 // ==========================================
 //   WIDGET ANIMASI TITIK (TYPING INDICATOR)
@@ -24,9 +25,10 @@ class _AnimatedDotsState extends State<_AnimatedDots>
       duration: const Duration(milliseconds: 900),
     )..repeat();
 
-    _anim = Tween<double>(begin: 0, end: 6).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0,
+      end: 6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -43,12 +45,11 @@ class _AnimatedDotsState extends State<_AnimatedDots>
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (i) {
-            double offsetY =
-                (i == 0)
-                    ? _anim.value
-                    : (i == 1)
-                        ? (_anim.value - 3).abs()
-                        : (6 - _anim.value);
+            double offsetY = (i == 0)
+                ? _anim.value
+                : (i == 1)
+                ? (_anim.value - 3).abs()
+                : (6 - _anim.value);
 
             return Transform.translate(
               offset: Offset(0, offsetY),
@@ -68,8 +69,6 @@ class _AnimatedDotsState extends State<_AnimatedDots>
     );
   }
 }
-
-
 
 // ==========================================
 //            HALAMAN AI CHAT
@@ -130,8 +129,12 @@ class _AIChatPageState extends State<AIChatPage> {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(12),
             topRight: const Radius.circular(12),
-            bottomLeft: isUser ? const Radius.circular(12) : const Radius.circular(0),
-            bottomRight: isUser ? const Radius.circular(0) : const Radius.circular(12),
+            bottomLeft: isUser
+                ? const Radius.circular(12)
+                : const Radius.circular(0),
+            bottomRight: isUser
+                ? const Radius.circular(0)
+                : const Radius.circular(12),
           ),
         ),
         child: Text(
@@ -188,6 +191,14 @@ class _AIChatPageState extends State<AIChatPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          // LOTTIE CAT
+                          SizedBox(
+                            height: 180,
+                            child: Lottie.asset(
+                              'assets/lottie/marai.json',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                           Text(
                             "Start Chat with MARAI✨",
                             style: TextStyle(
@@ -241,7 +252,9 @@ class _AIChatPageState extends State<AIChatPage> {
                         filled: true,
                         fillColor: Colors.grey[200],
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide.none,
