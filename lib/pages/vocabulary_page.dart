@@ -13,7 +13,8 @@ class _VocabularyPageState extends State<VocabularyPage> {
   // ---------------- STATE ----------------
   List<bool> showMiniPracticeAnswers = List.generate(5, (_) => false);
 
-  final String youtubeUrl = "https://youtu.be/SEz0k7Y7G1U";
+  final String youtubeVideoId = "UAUokmvcIxM"; 
+  final String youtubeUrl = "https://www.youtube.com/watch?v=UAUokmvcIxM"; 
 
   // ---------------- METHODS ----------------
   Future<void> _launchUrl() async {
@@ -373,7 +374,7 @@ class _VocabularyPageState extends State<VocabularyPage> {
 
                   const SizedBox(height: 16),
 
-                  // ---------------- WORD FORMATION REVISI ----------------
+                  // ---------------- WORD FORMATION REVISI (LENGKAP) ----------------
                   _buildSectionCard(
                     title: "Word Formation",
                     icon: Icons.build,
@@ -383,19 +384,23 @@ class _VocabularyPageState extends State<VocabularyPage> {
                       children: [
                         _buildParagraph(
                           "Word Formation membantu kita memahami bagaimana kata terbentuk dan artinya. "
-                          "Ada tiga jenis utama: Prefix (awalan), Suffix (akhiran), dan Root word (kata dasar).",
+                          "Ada tiga jenis utama: Prefix (awalan), Suffix (akhiran), dan Root Word (kata dasar).",
                         ),
                         const SizedBox(height: 12),
 
-                        // Prefix
+                        // ================= PREFIX =================
                         _buildParagraph(
-                          "1. Prefix (Awalan): mengubah arti kata",
+                          "1. Prefix (Awalan): awalan kata yang mengubah arti kata dasar.",
                         ),
                         _buildBulletList([
                           "un- : menjadikan kata negatif",
                           "re- : melakukan lagi",
                           "mis- : salah / keliru",
+                          "dis- : kebalikan / tidak",
+                          "pre- : sebelum",
+                          "over- : terlalu berlebihan",
                         ]),
+
                         _buildExampleCard(
                           title: "Contoh Prefix",
                           text: "She was unhappy because it rained all day.",
@@ -408,18 +413,46 @@ class _VocabularyPageState extends State<VocabularyPage> {
                           meaning: "redo → do again",
                           color: Colors.purple,
                         ),
+                        _buildExampleCard(
+                          title: "Contoh Prefix",
+                          text: "The teacher misunderstood the question.",
+                          meaning: "misunderstood → understood wrongly",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Prefix",
+                          text: "Smoking is discouraged in public places.",
+                          meaning: "discouraged → not encouraged",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Prefix",
+                          text: "You should preheat the oven before baking.",
+                          meaning: "preheat → heat before",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Prefix",
+                          text: "He overworked himself and became sick.",
+                          meaning: "overworked → worked too much",
+                          color: Colors.purple,
+                        ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
-                        // Suffix
+                        // ================= SUFFIX =================
                         _buildParagraph(
-                          "2. Suffix (Akhiran): mengubah arti atau fungsi kata",
+                          "2. Suffix (Akhiran): akhiran kata yang mengubah arti atau fungsi kata.",
                         ),
                         _buildBulletList([
-                          "-ful : penuh, memiliki sifat",
+                          "-ful : penuh / memiliki sifat",
                           "-less : tanpa / tidak memiliki",
                           "-able : bisa / layak",
+                          "-ness : keadaan / sifat",
+                          "-tion : hasil / proses",
+                          "-er : orang yang melakukan",
                         ]),
+
                         _buildExampleCard(
                           title: "Contoh Suffix",
                           text: "The guide was very helpful for tourists.",
@@ -428,22 +461,51 @@ class _VocabularyPageState extends State<VocabularyPage> {
                         ),
                         _buildExampleCard(
                           title: "Contoh Suffix",
+                          text:
+                              "This place is dangerous, but that one is harmless.",
+                          meaning: "harmless → without harm",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Suffix",
                           text: "This task is manageable if you work slowly.",
                           meaning: "manageable → can be managed",
                           color: Colors.purple,
                         ),
+                        _buildExampleCard(
+                          title: "Contoh Suffix",
+                          text: "Her kindness made everyone happy.",
+                          meaning: "kindness → state of being kind",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Suffix",
+                          text: "Education is important for success.",
+                          meaning: "education → process of educating",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Suffix",
+                          text: "My father is a teacher.",
+                          meaning: "teacher → a person who teaches",
+                          color: Colors.purple,
+                        ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
-                        // Root Word
+                        // ================= ROOT WORD =================
                         _buildParagraph(
-                          "3. Root Word (Kata Dasar): dasar arti kata lain",
+                          "3. Root Word (Kata Dasar): kata dasar yang menjadi inti arti kata.",
                         ),
                         _buildBulletList([
                           "photo → light",
                           "bio → life",
                           "act → do / perform",
+                          "tele → far",
+                          "write → write",
+                          "port → carry",
                         ]),
+
                         _buildExampleCard(
                           title: "Contoh Root Word",
                           text: "Biology is the study of living things.",
@@ -452,11 +514,105 @@ class _VocabularyPageState extends State<VocabularyPage> {
                         ),
                         _buildExampleCard(
                           title: "Contoh Root Word",
-                          text:
-                              "Photograph means 'light writing', a picture made using light.",
-                          meaning:
-                              "photo = light → photograph = picture made using light",
+                          text: "Photograph means a picture made using light.",
+                          meaning: "photo = light → photograph",
                           color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Root Word",
+                          text: "The actor performed well on stage.",
+                          meaning: "act = perform → actor",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Root Word",
+                          text:
+                              "Television allows us to see things from far away.",
+                          meaning: "tele = far → television",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Root Word",
+                          text: "She is writing a letter.",
+                          meaning: "write = write → writer",
+                          color: Colors.purple,
+                        ),
+                        _buildExampleCard(
+                          title: "Contoh Root Word",
+                          text: "This ship transports goods overseas.",
+                          meaning: "port = carry → transport",
+                          color: Colors.purple,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Video Section - 修改为YouTube缩略图
+                  _buildSectionCard(
+                    title: "Video Explanation",
+                    icon: Icons.play_circle_outline,
+                    backgroundColor: Colors.red,
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildParagraph(
+                          "Tonton video cara mudah menghafal vocabulary:",
+                        ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: _launchUrl,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  'https://img.youtube.com/vi/$youtubeVideoId/hqdefault.jpg',
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: double.infinity,
+                                      height: 200,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(Icons.error, size: 50),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Klik untuk menonton di YouTube",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ],
                     ),

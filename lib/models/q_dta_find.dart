@@ -1,4 +1,4 @@
-import '../models/question_model.dart';
+import 'question_model.dart';
 
 final List<Question> mainIdeaQuestions = [
   Question(

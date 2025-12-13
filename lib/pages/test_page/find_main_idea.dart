@@ -3,7 +3,7 @@ import 'package:lottie/lottie.dart';
 import 'package:confetti/confetti.dart';
 
 import '../../models/question_model.dart';
-import '../../database/q_dta_find.dart';
+import '../../models/q_dta_find.dart';
 
 class FindMainIdea extends StatefulWidget {
   const FindMainIdea({super.key});

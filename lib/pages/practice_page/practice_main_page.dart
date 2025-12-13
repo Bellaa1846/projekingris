@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lottie/lottie.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../models/question_model.dart';
-import '../../database/q_dta_p_main_idea.dart';
+import '../../models/q_dta_p_main_idea.dart';
 
 class PracticeMainIdea extends StatefulWidget {
   const PracticeMainIdea({super.key});
@@ -39,6 +40,9 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
   late AnimationController progressController;
   late Animation<double> progressAnimation;
 
+  // 🔊 AUDIO PLAYER
+  late AudioPlayer _audioPlayer;
+
   final List<Question> questions = mainIdeaPracticeQuestions;
 
   @override
@@ -49,7 +53,7 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
     _lottieEducation = AssetLottie('assets/lottie/education.json').load();
     _lottieStar = AssetLottie('assets/lottie/star.json').load();
 
-    // 🎉 Confetti (durasi pendek = stabil)
+    // 🎉 Confetti
     _confettiController = ConfettiController(
       duration: const Duration(milliseconds: 100),
     );
@@ -70,6 +74,9 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
     );
     progressAnimation =
         Tween<double>(begin: 0, end: 1).animate(progressController);
+
+    // 🔊 Audio
+    _audioPlayer = AudioPlayer();
   }
 
   @override
@@ -77,7 +84,21 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
     shakeController.dispose();
     progressController.dispose();
     _confettiController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
+  }
+
+  /// 🔊 PLAY SOUND
+  Future<void> _playCorrectSound() async {
+    await _audioPlayer.play(
+      AssetSource('sound/correct.mp3'),
+    );
+  }
+
+  Future<void> _playWrongSound() async {
+    await _audioPlayer.play(
+      AssetSource('sound/wrong.mp3'),
+    );
   }
 
   void handleAnswer(int index) {
@@ -94,8 +115,10 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
       confettiPlayed = true;
       score++;
       _confettiController.play();
+      _playCorrectSound(); // ✅ SOUND BENAR
     } else if (!correct) {
       shakeController.forward().then((_) => shakeController.reverse());
+      _playWrongSound(); // ❌ SOUND SALAH
     }
 
     progressController.forward(from: 0).whenComplete(_nextQuestion);
@@ -286,7 +309,7 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
           ),
         ),
 
-        // 🎉 CONFETTI (STABLE)
+        // 🎉 CONFETTI
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
