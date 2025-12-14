@@ -4,28 +4,30 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import '../database/db_helper.dart';
 
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
-
-  @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
-
 /* =========================
    MODEL ACHIEVEMENT
 ========================= */
 class Achievement {
+  final int id;
   final String title;
   final IconData icon;
-  final bool unlocked;
+  bool unlocked;
   final String hint;
 
   Achievement({
+    required this.id,
     required this.title,
     required this.icon,
     required this.unlocked,
     required this.hint,
   });
+}
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
@@ -36,34 +38,40 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController nameController = TextEditingController();
 
   /* =========================
-     DATA ACHIEVEMENT
+     ACHIEVEMENT HARDCODE
+     (status diambil dari SQLite)
   ========================= */
   final List<Achievement> achievements = [
     Achievement(
+      id: 0,
       title: "Beginner",
       icon: Icons.emoji_events,
-      unlocked: true,
+      unlocked: false,
       hint: "Hint 1",
     ),
     Achievement(
+      id: 1,
       title: "Explorer",
       icon: Icons.explore,
-      unlocked: true,
+      unlocked: false,
       hint: "Hint 2",
     ),
     Achievement(
+      id: 2,
       title: "Consistency",
       icon: Icons.calendar_month,
       unlocked: false,
       hint: "Hint 3",
     ),
     Achievement(
+      id: 3,
       title: "Expert",
       icon: Icons.star,
       unlocked: false,
       hint: "Hint 4",
     ),
     Achievement(
+      id: 4,
       title: "Master",
       icon: Icons.workspace_premium,
       unlocked: false,
@@ -75,6 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     loadProfile();
+    loadAchievements();
   }
 
   /* =========================
@@ -89,6 +98,35 @@ class _ProfilePageState extends State<ProfilePage> {
         photoPath = data["photoPath"] ?? "";
       });
     }
+  }
+
+  /* =========================
+     LOAD ACHIEVEMENTS (SQLITE)
+  ========================= */
+  Future<void> loadAchievements() async {
+    final db = await DatabaseHelper.instance.database;
+    final res = await db.query("achievements");
+
+    // jika DB kosong → seed default (SEMUA LOCK)
+    if (res.isEmpty) {
+      for (final a in achievements) {
+        await db.insert("achievements", {"id": a.id, "unlocked": 0});
+      }
+      return;
+    }
+
+    // mapping unlocked dari DB ke UI
+    for (final row in res) {
+      final id = row["id"] as int;
+      final unlocked = (row["unlocked"] as int) == 1;
+
+      final index = achievements.indexWhere((a) => a.id == id);
+      if (index != -1) {
+        achievements[index].unlocked = unlocked;
+      }
+    }
+
+    setState(() {});
   }
 
   /* =========================
@@ -115,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /* =========================
-     EDIT PROFILE
+     EDIT PROFILE (TIDAK DIUBAH)
   ========================= */
   void _editProfile() {
     nameController.text = name;
@@ -233,6 +271,7 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+
   /* =========================
      ACHIEVEMENTS UI
   ========================= */
@@ -323,8 +362,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color:
-                              a.unlocked ? Colors.black : Colors.grey.shade600,
+                          color: a.unlocked
+                              ? Colors.black
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -339,14 +379,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /* =========================
-     MAIN UI
+     MAIN UI (ASLI)
   ========================= */
   @override
   Widget build(BuildContext context) {
     if (name.isEmpty) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -359,7 +397,9 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // PROFILE CARD
+            /* =========================
+               PROFILE CARD + EDIT ICON
+            ========================= */
             Stack(
               children: [
                 Container(
@@ -428,10 +468,8 @@ class _ProfilePageState extends State<ProfilePage> {
                CAT + ACHIEVEMENT OVERLAP
             ========================= */
             Stack(
-              clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
               children: [
-                // LOTTIE CAT
                 SizedBox(
                   height: 160,
                   child: Lottie.asset(
@@ -440,9 +478,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
 
-                // ACHIEVEMENTS (OFFSET KE ATAS)
-                Transform.translate(
-                  offset: const Offset(0, 140),
+                Padding(
+                  padding: const EdgeInsets.only(top: 140),
                   child: _buildAchievements(),
                 ),
               ],

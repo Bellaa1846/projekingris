@@ -18,11 +18,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+    return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
   Future _createDB(Database db, int version) async {
@@ -37,10 +33,24 @@ class DatabaseHelper {
 
     // insert default sample profile
     await db.insert("profile", {
-      "name": "Your Name",
+      "name": "Mysterious User",
       "birthDate": "2000-01-01",
       "photoPath": "",
     });
+
+    //Buat tabel achivment
+    await db.execute('''
+      CREATE TABLE achievements (
+        id INTEGER PRIMARY KEY,
+        unlocked INTEGER
+      )
+    ''');
+
+    // // uji coba achivment
+    // await db.insert("achievements", {
+    //   "id": 4,
+    //   "unlocked": 1,
+    // });
   }
 
   Future<Map<String, dynamic>?> getProfile() async {
@@ -50,15 +60,14 @@ class DatabaseHelper {
   }
 
   Future<void> updateProfile(
-      String name, String birthDate, String photoPath) async {
+    String name,
+    String birthDate,
+    String photoPath,
+  ) async {
     final db = await database;
     await db.update(
       "profile",
-      {
-        "name": name,
-        "birthDate": birthDate,
-        "photoPath": photoPath,
-      },
+      {"name": name, "birthDate": birthDate, "photoPath": photoPath},
       where: "id = ?",
       whereArgs: [1],
     );
