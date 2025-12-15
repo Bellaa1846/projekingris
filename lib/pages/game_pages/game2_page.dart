@@ -1,1 +1,0 @@
-class Game2Page {}

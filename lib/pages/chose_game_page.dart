@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ujicoba1/pages/game_pages/game1_page.dart'; // contoh
-import 'package:ujicoba1/pages/game_pages/game2_page.dart'; // contoh
+import 'package:ujicoba1/pages/game_pages/word_match_challenge_page.dart'; // contoh
+import 'package:ujicoba1/pages/game_pages/main_idea_adventure_page.dart'; // contoh
 
 class ChoseGame extends StatefulWidget {
   const ChoseGame({super.key});
@@ -70,12 +70,12 @@ class _ChoseGameState extends State<ChoseGame> {
                     subtitle: "Latih pemahaman teks dengan cara menyenangkan",
                     color: Colors.amber.shade700,
                     onTap: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => const Game1Page(),
-                      //   ),
-                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WordMatchChallengePage(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 16),

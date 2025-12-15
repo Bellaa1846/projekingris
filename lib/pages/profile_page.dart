@@ -47,21 +47,23 @@ class _ProfilePageState extends State<ProfilePage> {
       title: "Beginner",
       icon: Icons.emoji_events,
       unlocked: false,
-      hint: "Hint 1",
+      hint:
+          "Ini bisa didapatkan ketika user menyelesaikan practice main idea dengan skor 8 atau lebih",
     ),
     Achievement(
       id: 1,
       title: "Explorer",
       icon: Icons.explore,
       unlocked: false,
-      hint: "Hint 2",
+      hint:
+          "Ini bisa didapatkan ketika user menyelesaikan practice vocabulary dengan skor 11 atau lebih",
     ),
     Achievement(
       id: 2,
-      title: "Consistency",
-      icon: Icons.calendar_month,
+      title: "Robot Friend",
+      icon: Icons.smart_toy,
       unlocked: false,
-      hint: "Hint 3",
+      hint: "Ini bisa didaptkan ketika user berbicara dengan robot untuk pertama kali",
     ),
     Achievement(
       id: 3,

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../database/db_helper.dart';
+
+
 // ==========================================
 //   WIDGET ANIMASI TITIK (TYPING INDICATOR)
 // ==========================================
@@ -25,10 +28,9 @@ class _AnimatedDotsState extends State<_AnimatedDots>
       duration: const Duration(milliseconds: 900),
     )..repeat();
 
-    _anim = Tween<double>(
-      begin: 0,
-      end: 6,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _anim = Tween<double>(begin: 0, end: 6).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -48,8 +50,8 @@ class _AnimatedDotsState extends State<_AnimatedDots>
             double offsetY = (i == 0)
                 ? _anim.value
                 : (i == 1)
-                ? (_anim.value - 3).abs()
-                : (6 - _anim.value);
+                    ? (_anim.value - 3).abs()
+                    : (6 - _anim.value);
 
             return Transform.translate(
               offset: Offset(0, offsetY),
@@ -70,6 +72,7 @@ class _AnimatedDotsState extends State<_AnimatedDots>
   }
 }
 
+
 // ==========================================
 //            HALAMAN AI CHAT
 // ==========================================
@@ -86,9 +89,18 @@ class _AIChatPageState extends State<AIChatPage> {
 
   bool _isLoading = false;
 
-  void _sendMessage() async {
+  // 🔑 ACHIEVEMENT STATE
+  bool _firstChatAchievementUnlocked = false;
+
+  // ===================== SEND MESSAGE =====================
+  Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+
+    // 🏆 FIRST CHAT ACHIEVEMENT
+    if (_messages.isEmpty && !_firstChatAchievementUnlocked) {
+      await _unlockFirstChatAchievement();
+    }
 
     setState(() {
       _messages.add({'sender': 'user', 'text': text});
@@ -98,7 +110,9 @@ class _AIChatPageState extends State<AIChatPage> {
     _controller.clear();
 
     try {
-      final res = await Gemini.instance.prompt(parts: [Part.text(text)]);
+      final res = await Gemini.instance.prompt(
+        parts: [Part.text(text)],
+      );
       final botReply = res?.output ?? "Maaf, saya tidak bisa menjawab.";
 
       setState(() {
@@ -115,6 +129,49 @@ class _AIChatPageState extends State<AIChatPage> {
     }
   }
 
+  // ===================== ACHIEVEMENT LOGIC =====================
+  Future<void> _unlockFirstChatAchievement() async {
+    await DatabaseHelper.instance.unlockAchievement(2);
+    _firstChatAchievementUnlocked = true;
+
+    // 🔔 Show dialog safely after frame
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _showAchievementDialog();
+      }
+    });
+  }
+
+  // ===================== ACHIEVEMENT DIALOG =====================
+  void _showAchievementDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          "🤖 Achievement Unlocked!",
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          "Welcome!\nYou started your first AI conversation.",
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Nice!"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===================== CHAT BUBBLE =====================
   Widget _buildBubble(Map<String, dynamic> msg) {
     final bool isUser = msg["sender"] == "user";
 
@@ -129,12 +186,10 @@ class _AIChatPageState extends State<AIChatPage> {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(12),
             topRight: const Radius.circular(12),
-            bottomLeft: isUser
-                ? const Radius.circular(12)
-                : const Radius.circular(0),
-            bottomRight: isUser
-                ? const Radius.circular(0)
-                : const Radius.circular(12),
+            bottomLeft:
+                isUser ? const Radius.circular(12) : Radius.zero,
+            bottomRight:
+                isUser ? Radius.zero : const Radius.circular(12),
           ),
         ),
         child: Text(
@@ -149,7 +204,7 @@ class _AIChatPageState extends State<AIChatPage> {
     );
   }
 
-  /// 🔥 BUBBLE TYPING (dengan animasi titik)
+  // 🔥 TYPING INDICATOR
   Widget _typingBubble() {
     return Align(
       alignment: Alignment.centerLeft,
@@ -169,6 +224,7 @@ class _AIChatPageState extends State<AIChatPage> {
     );
   }
 
+  // ===================== UI =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,7 +247,6 @@ class _AIChatPageState extends State<AIChatPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // LOTTIE CAT
                           SizedBox(
                             height: 180,
                             child: Lottie.asset(
@@ -199,7 +254,7 @@ class _AIChatPageState extends State<AIChatPage> {
                               fit: BoxFit.contain,
                             ),
                           ),
-                          Text(
+                          const Text(
                             "Start Chat with MARAI✨",
                             style: TextStyle(
                               fontSize: 18,
@@ -208,7 +263,7 @@ class _AIChatPageState extends State<AIChatPage> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
+                          const Text(
                             "Write down your question",
                             style: TextStyle(
                               fontSize: 14,
@@ -220,25 +275,31 @@ class _AIChatPageState extends State<AIChatPage> {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: _messages.length + (_isLoading ? 1 : 0),
+                      itemCount:
+                          _messages.length + (_isLoading ? 1 : 0),
                       itemBuilder: (context, index) {
-                        if (_isLoading && index == _messages.length) {
-                          return _typingBubble(); // 🔥 tampilkan bubble typing
+                        if (_isLoading &&
+                            index == _messages.length) {
+                          return _typingBubble();
                         }
                         return _buildBubble(_messages[index]);
                       },
                     ),
             ),
 
+            // ===================== INPUT =====================
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 4,
-                    offset: const Offset(0, -1),
+                    offset: Offset(0, -1),
                   ),
                 ],
               ),
@@ -267,7 +328,10 @@ class _AIChatPageState extends State<AIChatPage> {
                     radius: 26,
                     backgroundColor: Colors.indigo,
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
+                      icon: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                      ),
                       onPressed: _sendMessage,
                     ),
                   ),

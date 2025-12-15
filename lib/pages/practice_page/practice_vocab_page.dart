@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 import '../../models/question_model.dart';
 import '../../models/voca_practice_question.dart';
+import '../../database/db_helper.dart';
 
 class PracticeVocabulary extends StatefulWidget {
   const PracticeVocabulary({super.key});
@@ -22,6 +23,9 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
   bool _quizFinished = false;
   bool _answerLocked = false;
   int? _selectedIndex;
+
+  bool _achievementUnlocked = false;
+  bool _resultSoundPlayed = false;
 
   // ===================== CONTROLLERS =====================
   late final ConfettiController _confettiController;
@@ -50,7 +54,8 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
   }
 
   void _initLottie() {
-    _educationLottie = AssetLottie('assets/lottie/forPracticeVocab.json').load();
+    _educationLottie =
+        AssetLottie('assets/lottie/forPracticeVocab.json').load();
     _starLottie = AssetLottie('assets/lottie/star.json').load();
   }
 
@@ -60,7 +65,7 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
 
   void _initConfetti() {
     _confettiController = ConfettiController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 800),
     );
   }
 
@@ -103,6 +108,10 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
     await _audioPlayer.play(AssetSource('sound/wrong.mp3'));
   }
 
+  Future<void> _playResultSound() async {
+    await _audioPlayer.play(AssetSource('sound/finishQuiz.mp3'));
+  }
+
   // ===================== LOGIC =====================
   void _handleAnswer(int index) {
     if (_answerLocked) return;
@@ -112,7 +121,8 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
       _answerLocked = true;
     });
 
-    final isCorrect = index == _questions[_currentQuestionIndex].correctIndex;
+    final isCorrect =
+        index == _questions[_currentQuestionIndex].correctIndex;
 
     if (isCorrect) {
       _score++;
@@ -126,7 +136,7 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
     _progressController.forward(from: 0).whenComplete(_nextQuestion);
   }
 
-  void _nextQuestion() {
+  Future<void> _nextQuestion() async {
     _confettiController.stop();
 
     if (_currentQuestionIndex < _questions.length - 1) {
@@ -136,7 +146,27 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
         _answerLocked = false;
       });
     } else {
-      setState(() => _quizFinished = true);
+      // 🔑 Unlock achievement FIRST
+      await _handleAchievementUnlock();
+
+      setState(() {
+        _quizFinished = true;
+      });
+
+      // 🔔 Show achievement dialog safely
+      if (_achievementUnlocked) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showAchievementDialog();
+        });
+      }
+    }
+  }
+
+  Future<void> _handleAchievementUnlock() async {
+    // RULE: skor ≥ 11 → unlock achievement id = 1
+    if (_score >= 11) {
+      await DatabaseHelper.instance.unlockAchievement(1);
+      _achievementUnlocked = true;
     }
   }
 
@@ -148,10 +178,12 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
       _quizFinished = false;
       _answerLocked = false;
       _selectedIndex = null;
+      _achievementUnlocked = false;
+      _resultSoundPlayed = false;
     });
   }
 
-  // ===================== UI =====================
+  // ===================== UI ROOT =====================
   @override
   Widget build(BuildContext context) {
     return _quizFinished ? _buildResultScreen() : _buildQuizScreen();
@@ -161,9 +193,17 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
   Widget _buildResultScreen() {
     final textTheme = Theme.of(context).textTheme;
 
+    // 🔊 Play result sound ONCE
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_resultSoundPlayed) {
+        _playResultSound();
+        _resultSoundPlayed = true;
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Main Idea Result"),
+        title: const Text("Vocabulary Result"),
         backgroundColor: Colors.grey.shade200,
       ),
       body: Center(
@@ -174,8 +214,9 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
               height: 240,
               child: FutureBuilder<LottieComposition>(
                 future: _starLottie,
-                builder: (_, snapshot) =>
-                    snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
+                builder: (_, snapshot) => snapshot.hasData
+                    ? Lottie(composition: snapshot.data!)
+                    : const SizedBox(),
               ),
             ),
             Text("Your Score", style: textTheme.titleMedium),
@@ -203,6 +244,35 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
     );
   }
 
+  // ===================== ACHIEVEMENT DIALOG =====================
+  void _showAchievementDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          "🎉 Achievement Unlocked!",
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          "Excellent!\nYou unlocked Vocabulary Master achievement.",
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Awesome!"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ===================== QUIZ SCREEN =====================
   Widget _buildQuizScreen() {
     final question = _questions[_currentQuestionIndex];
@@ -212,7 +282,7 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
       children: [
         Scaffold(
           appBar: AppBar(
-            title: const Text("Main Idea Practice"),
+            title: const Text("Vocabulary Practice"),
             backgroundColor: Colors.grey.shade200,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(6),
@@ -231,18 +301,12 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
               children: [
                 Text(
                   "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
-                  style: textTheme.bodyMedium!.copyWith(
-                    color: Colors.grey.shade600,
-                    letterSpacing: 0.5,
-                  ),
+                  style: textTheme.bodyMedium!
+                      .copyWith(color: Colors.grey.shade600),
                 ),
-                const SizedBox(height: 0),
                 _buildLottieHeader(),
                 const SizedBox(height: 16),
-                Text(
-                  question.text,
-                  style: textTheme.titleLarge,
-                ),
+                Text(question.text, style: textTheme.titleLarge),
                 const SizedBox(height: 28),
                 ..._buildOptions(question),
                 if (_answerLocked) _buildProgressBar(),
@@ -261,8 +325,9 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
         height: 210,
         child: FutureBuilder<LottieComposition>(
           future: _educationLottie,
-          builder: (_, snapshot) =>
-              snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
+          builder: (_, snapshot) => snapshot.hasData
+              ? Lottie(composition: snapshot.data!)
+              : const SizedBox(),
         ),
       ),
     );
@@ -288,13 +353,18 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
         animation: _shakeAnimation,
         builder: (_, child) {
           final offset =
-              (_answerLocked && index == _selectedIndex && index != question.correctIndex)
+              (_answerLocked &&
+                      index == _selectedIndex &&
+                      index != question.correctIndex)
                   ? (_shakeAnimation.value % 2 == 0
                       ? _shakeAnimation.value
                       : -_shakeAnimation.value)
                   : 0.0;
 
-          return Transform.translate(offset: Offset(offset, 0), child: child);
+          return Transform.translate(
+            offset: Offset(offset, 0),
+            child: child,
+          );
         },
         child: Container(
           width: double.infinity,
@@ -302,7 +372,6 @@ class _PracticeVocabularyState extends State<PracticeVocabulary>
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: backgroundColor,
-              elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),

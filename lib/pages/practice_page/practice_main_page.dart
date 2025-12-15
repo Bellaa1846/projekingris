@@ -108,7 +108,7 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
   }
 
   Future<void> _playResultSound() async {
-    await _audioPlayer.play(AssetSource('sound/finsihQuiz.mp3'));
+    await _audioPlayer.play(AssetSource('sound/finishQuiz.mp3'));
   }
 
   // ===================== LOGIC =====================
@@ -135,7 +135,7 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
     _progressController.forward(from: 0).whenComplete(_nextQuestion);
   }
 
-  void _nextQuestion() {
+  Future<void> _nextQuestion() async {
     _confettiController.stop();
 
     if (_currentQuestionIndex < _questions.length - 1) {
@@ -145,13 +145,24 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
         _answerLocked = false;
       });
     } else {
-      _handleAchievementUnlock();
-      setState(() => _quizFinished = true);
+      // 🔑 Unlock achievement FIRST
+      await _handleAchievementUnlock();
+
+      setState(() {
+        _quizFinished = true;
+      });
+
+      // 🔔 Show achievement dialog SAFELY
+      if (_achievementUnlocked) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showAchievementDialog();
+        });
+      }
     }
   }
 
   Future<void> _handleAchievementUnlock() async {
-    // RULE: skor ≥ 8 → unlock achievement pertama (id = 0)
+    // RULE: skor ≥ 8 → unlock achievement id = 0
     if (_score >= 8) {
       await DatabaseHelper.instance.unlockAchievement(0);
       _achievementUnlocked = true;
@@ -176,20 +187,15 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
   Widget build(BuildContext context) {
     return _quizFinished ? _buildResultScreen() : _buildQuizScreen();
   }
+
   // ===================== RESULT SCREEN =====================
   Widget _buildResultScreen() {
     final textTheme = Theme.of(context).textTheme;
 
-    // Play result sound & show achievement dialog once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_resultSoundPlayed) {
         _playResultSound();
         _resultSoundPlayed = true;
-      }
-
-      if (_achievementUnlocked) {
-        _showAchievementDialog();
-        _achievementUnlocked = false;
       }
     });
 
@@ -206,9 +212,8 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
               height: 240,
               child: FutureBuilder<LottieComposition>(
                 future: _starLottie,
-                builder: (_, snapshot) => snapshot.hasData
-                    ? Lottie(composition: snapshot.data!)
-                    : const SizedBox(),
+                builder: (_, snapshot) =>
+                    snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
               ),
             ),
             Text("Your Score", style: textTheme.titleMedium),
@@ -295,16 +300,12 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
                   "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
                   style: textTheme.bodyMedium!.copyWith(
                     color: Colors.grey.shade600,
-                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 16),
                 _buildLottieHeader(),
                 const SizedBox(height: 16),
-                Text(
-                  question.text,
-                  style: textTheme.titleLarge,
-                ),
+                Text(question.text, style: textTheme.titleLarge),
                 const SizedBox(height: 28),
                 ..._buildOptions(question),
                 if (_answerLocked) _buildProgressBar(),
@@ -323,9 +324,8 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
         height: 180,
         child: FutureBuilder<LottieComposition>(
           future: _educationLottie,
-          builder: (_, snapshot) => snapshot.hasData
-              ? Lottie(composition: snapshot.data!)
-              : const SizedBox(),
+          builder: (_, snapshot) =>
+              snapshot.hasData ? Lottie(composition: snapshot.data!) : const SizedBox(),
         ),
       ),
     );
@@ -370,7 +370,6 @@ class _PracticeMainIdeaState extends State<PracticeMainIdea>
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: backgroundColor,
-              elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),

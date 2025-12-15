@@ -17,7 +17,7 @@ void main() async {
 
   // // ====== HAPUS DATABASE LAMA (sementara) ======
   final dbPath = await getDatabasesPath();
-  final path = join(dbPath, 'app.db');
+  final path = join(dbPath, 'palsu.db');
 
   await deleteDatabase(path);
   print("🔥 DATABASE DELETED — akan dibuat ulang saat app berjalan");
