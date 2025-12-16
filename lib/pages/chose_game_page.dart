@@ -67,7 +67,7 @@ class _ChoseGameState extends State<ChoseGame> {
                   _buildFullMenuCard(
                     icon: Icons.quiz,
                     title: "Game 1",
-                    subtitle: "Latih pemahaman teks dengan cara menyenangkan",
+                    subtitle: "Tingkatkan kosakata melalui mini-games",
                     color: Colors.amber.shade700,
                     onTap: () {
                       Navigator.push(
@@ -84,15 +84,15 @@ class _ChoseGameState extends State<ChoseGame> {
                   _buildFullMenuCard(
                     icon: Icons.menu_book,
                     title: "Game 2",
-                    subtitle: "Tingkatkan kosakata melalui mini-games",
+                    subtitle: "Latih pemahaman teks dengan petualangan seru",
                     color: Colors.deepOrange.shade600,
                     onTap: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => const Game2Page(),
-                      //   ),
-                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MainIdeaAdventurePage(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
